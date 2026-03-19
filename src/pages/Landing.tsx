@@ -16,11 +16,11 @@ const Landing = () => (
       <div className="relative z-10 max-w-4xl animate-fade-in-up">
         <h1 className="font-display text-6xl sm:text-8xl md:text-9xl leading-[0.9] mb-6">
           DEIN TOR.{" "}
-          <span className="text-neon neon-text-glow">DEIN RUHM.</span>{" "}
-          DEIN BIER.
+          <span className="text-neon neon-text-glow">DEIN FAME.</span>{" "}
+          DEIN SUPPORT.
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto mb-10">
-          Die Plattform, auf der Amateurfußballer ihre besten Momente teilen – und Fans ihnen ein Bier ausgeben.
+          Die Plattform, auf der Amateurfußballer ihre besten Momente teilen – und Fans sie supporten.
         </p>
         <Link to="/register">
           <Button variant="neon" size="lg" className="text-lg px-10 py-6 rounded-full animate-pulse-neon">

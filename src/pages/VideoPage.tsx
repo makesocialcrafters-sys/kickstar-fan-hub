@@ -164,7 +164,7 @@ const VideoPage = () => {
             onClick={handleSendTip}
             disabled={!effectiveAmount || effectiveAmount < 100 || loading}
           >
-            {loading ? "Wird verarbeitet…" : "🍺 Trinkgeld senden"}
+            {loading ? "Wird verarbeitet…" : "⚡ Support senden"}
           </Button>
         </div>
       </div>

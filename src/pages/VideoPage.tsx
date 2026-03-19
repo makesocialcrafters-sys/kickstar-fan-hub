@@ -64,7 +64,7 @@ const VideoPage = () => {
           <div className="text-center p-8">
             <div className="text-7xl mb-4">🎉</div>
             <h2 className="font-display text-3xl text-neon neon-text-glow">DANKE!</h2>
-            <p className="text-muted-foreground mt-2">Dein Trinkgeld ist angekommen!</p>
+            <p className="text-muted-foreground mt-2">Dein Support ist angekommen!</p>
           </div>
         </div>
       )}

@@ -64,7 +64,7 @@ const VideoPage = () => {
           <div className="text-center p-8">
             <div className="text-7xl mb-4">🎉</div>
             <h2 className="font-display text-3xl text-neon neon-text-glow">DANKE!</h2>
-            <p className="text-muted-foreground mt-2">Dein Trinkgeld ist angekommen!</p>
+            <p className="text-muted-foreground mt-2">Dein Support ist angekommen!</p>
           </div>
         </div>
       )}
@@ -108,7 +108,7 @@ const VideoPage = () => {
 
         {/* Tip section */}
         <div className="rounded-xl border border-card-border bg-card p-6 space-y-6">
-          <h2 className="font-display text-2xl text-center">🔥 FEIERST DU DAS TOR?</h2>
+           <h2 className="font-display text-2xl text-center">🔥 FEIERST DU DAS TOR?</h2>
 
           {/* Amount buttons */}
           <div className="grid grid-cols-4 gap-2">
@@ -164,7 +164,7 @@ const VideoPage = () => {
             onClick={handleSendTip}
             disabled={!effectiveAmount || effectiveAmount < 100 || loading}
           >
-            {loading ? "Wird verarbeitet…" : "🍺 Trinkgeld senden"}
+            {loading ? "Wird verarbeitet…" : "⚡ Support senden"}
           </Button>
         </div>
       </div>

@@ -48,7 +48,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-3 gap-3 mb-8">
           <StatCard label="Einnahmen" value={formatEuro(total_earnings)} />
           <StatCard label="Videos" value={String(mockVideos.length)} />
-          <StatCard label="Trinkgelder" value={String(mockTips.length)} />
+          <StatCard label="Support" value={String(mockTips.length)} />
         </div>
 
         {/* Upload CTA */}
@@ -93,7 +93,7 @@ const Dashboard = () => {
             {mockTips.length === 0 ? (
               <div className="rounded-xl border border-card-border bg-card p-8 text-center">
                 <p className="text-4xl mb-2">💌</p>
-                <p className="text-muted-foreground text-sm">Noch keine Trinkgelder erhalten.</p>
+                <p className="text-muted-foreground text-sm">Noch keinen Support erhalten.</p>
               </div>
             ) : (
               <div className="space-y-3">

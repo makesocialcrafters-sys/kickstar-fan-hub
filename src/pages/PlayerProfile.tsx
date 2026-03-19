@@ -74,7 +74,7 @@ const PlayerProfile = () => {
         <div className="container max-w-2xl">
           <Link to={`/v/${mockVideos[0]?.id || "v1"}`}>
             <button className="w-full bg-neon text-neon-foreground font-bold py-4 rounded-full text-base neon-glow hover:bg-neon/90 transition-colors">
-              Feier ihn! 🔥
+              Support ihn! 🔥
             </button>
           </Link>
         </div>

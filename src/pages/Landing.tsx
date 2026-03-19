@@ -5,7 +5,7 @@ import FootballFieldBg from "@/components/FootballFieldBg";
 const steps = [
   { emoji: "⚽", title: "PROFIL ANLEGEN", desc: "Erstelle dein Spielerprofil in unter 2 Minuten." },
   { emoji: "🎥", title: "VIDEO HOCHLADEN", desc: "Lade deine besten Tore und Aktionen als Highlight hoch." },
-  { emoji: "💰", title: "LINK TEILEN & KASSIEREN", desc: "Teile deinen Link und lass dich von Fans mit Trinkgeld feiern." },
+  { emoji: "💰", title: "LINK TEILEN & KASSIEREN", desc: "Teile deinen Link und lass dich von Fans supporten." },
 ];
 
 const Landing = () => (

@@ -48,7 +48,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-3 gap-3 mb-8">
           <StatCard label="Einnahmen" value={formatEuro(total_earnings)} />
           <StatCard label="Videos" value={String(mockVideos.length)} />
-          <StatCard label="Trinkgelder" value={String(mockTips.length)} />
+          <StatCard label="Support" value={String(mockTips.length)} />
         </div>
 
         {/* Upload CTA */}

@@ -35,6 +35,7 @@ const App = () => (
             <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+            <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/p/:username" element={<PlayerProfile />} />
             <Route path="/v/:id" element={<VideoPage />} />
             <Route path="*" element={<NotFound />} />

@@ -31,14 +31,12 @@ const VideoPage = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data: vid } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const [{ data: vid }, { data: { user } }] = await Promise.all([
+        supabase.from('videos').select('*').eq('id', id).single(),
+        supabase.auth.getUser(),
+      ]);
       if (!vid) { setLoading(false); return; }
 
-      // Increment view count
       supabase.rpc('increment_view_count', { video_id: id });
 
       const { data: prof } = await supabase
@@ -47,6 +45,7 @@ const VideoPage = () => {
         .eq('id', vid.player_id)
         .single();
 
+      setIsOwnVideo(user?.id === vid.player_id);
       setVideo(vid as unknown as Video);
       setPlayer(prof as unknown as Profile);
       setLoading(false);

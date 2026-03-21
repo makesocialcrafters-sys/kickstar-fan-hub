@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import GrainOverlay from "@/components/GrainOverlay";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import OnboardingRoute from "@/components/OnboardingRoute";
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -28,7 +29,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
             <Route path="/p/:username" element={<PlayerProfile />} />

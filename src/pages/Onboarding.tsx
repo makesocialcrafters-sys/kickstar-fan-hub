@@ -18,7 +18,7 @@ const POSITIONS = [
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
 
@@ -106,6 +106,7 @@ const Onboarding = () => {
         .eq('id', user.id);
 
       if (error) throw error;
+      await refreshProfile();
       setStep(4);
     } catch (err: any) {
       console.error('Profile update failed:', err);

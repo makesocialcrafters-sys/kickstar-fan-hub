@@ -35,20 +35,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    setProfileLoading(true);
+  const fetchProfile = useCallback(async (userId: string, isInitial = true) => {
+    if (isInitial) setProfileLoading(true);
     const { data } = await supabase
       .from("profiles")
       .select("username")
       .eq("id", userId)
       .single();
     setProfile(data ? { username: data.username } : null);
-    setProfileLoading(false);
+    if (isInitial) setProfileLoading(false);
   }, []);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, false);
     }
   }, [user, fetchProfile]);
 

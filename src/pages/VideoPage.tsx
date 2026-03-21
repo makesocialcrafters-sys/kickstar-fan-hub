@@ -145,63 +145,77 @@ const VideoPage = () => {
           </Link>
         )}
 
-        <div className="rounded-xl border border-card-border bg-card p-6 space-y-6">
-          <h2 className="font-display text-2xl text-center">🔥 FEIERST DU DAS TOR?</h2>
-
-          <div className="grid grid-cols-4 gap-2">
-            {PRESET_AMOUNTS.map((amt) => (
-              <button
-                key={amt}
-                type="button"
-                onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
-                className={`rounded-lg border py-3 font-display text-lg transition-all ${
-                  selectedAmount === amt && !customAmount
-                    ? "border-neon bg-neon/10 text-neon"
-                    : "border-card-border bg-background text-muted-foreground hover:border-muted-foreground/50"
-                }`}
-              >
-                {formatEuro(amt)}
-              </button>
-            ))}
+        {isOwnVideo ? (
+          <div className="rounded-xl border border-card-border bg-card p-6 text-center space-y-4">
+            <p className="text-2xl">🎥</p>
+            <p className="text-foreground font-medium">Das ist dein eigenes Video – teile den Link damit deine Fans dich feiern können!</p>
+            <Button
+              variant="neon"
+              className="rounded-full"
+              onClick={() => navigator.clipboard.writeText(window.location.href)}
+            >
+              Link kopieren
+            </Button>
           </div>
+        ) : (
+          <div className="rounded-xl border border-card-border bg-card p-6 space-y-6">
+            <h2 className="font-display text-2xl text-center">🔥 FEIERST DU DAS TOR?</h2>
 
-          <div className="space-y-2">
-            <Label>Oder eigenen Betrag eingeben (€)</Label>
-            <Input
-              type="number"
-              min="1"
-              step="0.5"
-              placeholder="z.B. 7.50"
-              value={customAmount}
-              onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
-              className="bg-background border-card-border h-12"
-            />
+            <div className="grid grid-cols-4 gap-2">
+              {PRESET_AMOUNTS.map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => { setSelectedAmount(amt); setCustomAmount(""); }}
+                  className={`rounded-lg border py-3 font-display text-lg transition-all ${
+                    selectedAmount === amt && !customAmount
+                      ? "border-neon bg-neon/10 text-neon"
+                      : "border-card-border bg-background text-muted-foreground hover:border-muted-foreground/50"
+                  }`}
+                >
+                  {formatEuro(amt)}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Oder eigenen Betrag eingeben (€)</Label>
+              <Input
+                type="number"
+                min="1"
+                step="0.5"
+                placeholder="z.B. 7.50"
+                value={customAmount}
+                onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
+                className="bg-background border-card-border h-12"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                value={fanName}
+                onChange={(e) => setFanName(e.target.value)}
+                placeholder="Dein Name (optional)"
+                className="bg-background border-card-border h-12"
+              />
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder='z.B. "Wahnsinns Schuss!"'
+                className="bg-background border-card-border min-h-[80px]"
+              />
+            </div>
+
+            <Button
+              variant="neon"
+              className="w-full h-14 rounded-full text-lg"
+              onClick={handleSendTip}
+              disabled={!effectiveAmount || effectiveAmount < 100 || sending}
+            >
+              {sending ? "Wird verarbeitet…" : "⚡ Support senden"}
+            </Button>
           </div>
-
-          <div className="space-y-4">
-            <Input
-              value={fanName}
-              onChange={(e) => setFanName(e.target.value)}
-              placeholder="Dein Name (optional)"
-              className="bg-background border-card-border h-12"
-            />
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder='z.B. "Wahnsinns Schuss!"'
-              className="bg-background border-card-border min-h-[80px]"
-            />
-          </div>
-
-          <Button
-            variant="neon"
-            className="w-full h-14 rounded-full text-lg"
-            onClick={handleSendTip}
-            disabled={!effectiveAmount || effectiveAmount < 100 || sending}
-          >
-            {sending ? "Wird verarbeitet…" : "⚡ Support senden"}
-          </Button>
-        </div>
+        )}
       </div>
     </div>
   );

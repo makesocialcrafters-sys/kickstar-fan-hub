@@ -85,10 +85,7 @@ const Dashboard = () => {
                     className="block rounded-xl border border-card-border bg-card p-4 hover:border-neon/30 transition-colors"
                   >
                     <p className="font-medium text-foreground">{v.title}</p>
-                    <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                      <span>👁 {v.view_count} Views</span>
-                      <span>{relativeTime(v.created_at)}</span>
-                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">{relativeTime(v.created_at)}</p>
                   </Link>
                 ))}
               </div>

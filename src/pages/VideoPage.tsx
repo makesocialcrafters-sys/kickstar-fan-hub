@@ -37,7 +37,7 @@ const VideoPage = () => {
       ]);
       if (!vid) { setLoading(false); return; }
 
-      supabase.rpc('increment_view_count', { video_id: id });
+      
 
       const { data: prof } = await supabase
         .from('profiles')

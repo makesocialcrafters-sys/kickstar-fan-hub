@@ -14,7 +14,128 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          club_name: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          position: string | null
+          total_earnings: number
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          club_name?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          position?: string | null
+          total_earnings?: number
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          club_name?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          position?: string | null
+          total_earnings?: number
+          username?: string | null
+        }
+        Relationships: []
+      }
+      tips: {
+        Row: {
+          amount: number
+          created_at: string
+          fan_name: string | null
+          id: string
+          message: string | null
+          player_id: string
+          status: string
+          stripe_session_id: string | null
+          video_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          fan_name?: string | null
+          id?: string
+          message?: string | null
+          player_id: string
+          status?: string
+          stripe_session_id?: string | null
+          video_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          fan_name?: string | null
+          id?: string
+          message?: string | null
+          player_id?: string
+          status?: string
+          stripe_session_id?: string | null
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tips_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      videos: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          title: string
+          video_url: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          title: string
+          video_url: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          title?: string
+          video_url?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

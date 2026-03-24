@@ -1,51 +1,50 @@
 
 
-## Stripe Checkout + Tip Flow Integration
+## Stripe Payment Integration for FootyTips
 
-The user wants to implement the full Stripe payment flow with two edge functions (checkout + webhook), a dedicated TipSection component, a SuccessOverlay with confetti, and integrate everything into VideoPage.tsx.
+### Overview
+Implement the complete Stripe checkout flow: two edge functions (checkout + webhook), a TipSection component, a SuccessOverlay with canvas confetti, and wire everything into VideoPage.
 
-### Prerequisites
-- **Stripe must be enabled** using the Stripe tool to collect the secret key
-- **canvas-confetti** package needs to be installed
+### Prerequisites — Secrets
+The following secrets need to be added before the edge functions will work:
+- **STRIPE_SECRET_KEY** — from Stripe Dashboard → Developers → API Keys
+- **STRIPE_WEBHOOK_SECRET** — from Stripe Dashboard → Developers → Webhooks
+
+These will be requested via the `add_secret` tool during implementation.
 
 ### Changes
 
-**1. Enable Stripe integration**
-- Use the `stripe--enable_stripe` tool to set up Stripe and collect the secret key
+**1. Add secrets: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`**
 
-**2. Create edge function: `supabase/functions/checkout/index.ts`**
-- Accepts POST with `{ videoId, playerId, amount, fanName, message }`
-- Uses Stripe SDK to create a checkout session (mode: payment, currency: EUR)
-- Fetches player's `display_name` from profiles via service role client
-- Inserts a `pending` tip row into the `tips` table
-- Returns `{ url: session.url }` for redirect
-- Includes CORS headers for browser access
+**2. Create `supabase/functions/checkout/index.ts`**
+- Accepts `{ videoId, playerId, amount, fanName, message }`
+- Creates a pending tip in DB, then creates a Stripe checkout session
+- Returns `{ url }` for redirect
+- CORS headers included
 
-**3. Create edge function: `supabase/functions/stripe-webhook/index.ts`**
-- Verifies Stripe signature using `STRIPE_WEBHOOK_SECRET`
-- On `checkout.session.completed`: updates tip status to `completed`
-- The existing `update_player_earnings` DB trigger handles earnings automatically
+**3. Create `supabase/functions/stripe-webhook/index.ts`**
+- Verifies Stripe signature
+- On `checkout.session.completed`: updates tip status to `completed` using `tip_id` from metadata
+- The existing `update_player_earnings` trigger handles earnings automatically
 
 **4. Create `src/components/TipSection.tsx`**
-- Standalone component with preset amounts (1€, 3€, 5€, 10€), custom amount input, fan name, message
-- Calls the checkout edge function via `supabase.functions.invoke('checkout', ...)`
-- Redirects to Stripe checkout URL on success
-- Styled with dark theme colors matching the app
+- Extracted tip UI: preset amounts (1€, 3€, 5€, 10€), custom input, fan name, message
+- Calls `supabase.functions.invoke("checkout")` and redirects to Stripe
+- Props: `videoId`, `playerId`
 
 **5. Create `src/components/SuccessOverlay.tsx`**
-- Full-screen overlay with confetti animation (canvas-confetti)
-- Auto-dismisses after 4 seconds
-- Shows "DANKE!" message with close button
+- Canvas-based confetti animation (no external dependency needed)
+- Auto-dismisses after 4 seconds, click to dismiss
+- "DANKE! Dein Support ist angekommen!"
 
 **6. Update `src/pages/VideoPage.tsx`**
-- Replace inline tip form with `<TipSection videoId={video.id} playerId={player.id} />`
-- Replace inline confetti overlay with `<SuccessOverlay>`
-- Detect `?success=true` param, show overlay, then clean URL with `history.replaceState`
-- Keep `isOwnVideo` logic as-is (share box vs tip section)
+- Remove inline tip form and confetti overlay
+- Import and use `<TipSection>` and `<SuccessOverlay>`
+- On `?success=true`: show overlay, clean URL with `history.replaceState`
+- Keep existing `isOwnVideo` logic (share box vs tip section)
 
-**7. Install `canvas-confetti` package**
-
-### Secrets needed
-- `STRIPE_SECRET_KEY` — collected via Stripe enable tool
-- `STRIPE_WEBHOOK_SECRET` — user will need to configure this in Stripe dashboard after we provide the webhook URL
+### Stripe Webhook Setup (user action after deploy)
+Register webhook URL in Stripe Dashboard:
+- URL: `https://pxzcezracqyrbnixlycg.supabase.co/functions/v1/stripe-webhook`
+- Event: `checkout.session.completed`
 

@@ -70,7 +70,7 @@ const Landing = () => (
           <Button
             variant="outline"
             size="lg"
-            className="border-2 border-neon-foreground text-neon-foreground hover:bg-neon-foreground hover:text-neon rounded-full px-10 py-6 text-lg font-bold"
+            className="border-2 border-neon-foreground bg-neon-foreground text-neon hover:bg-transparent hover:text-neon-foreground rounded-full px-10 py-6 text-lg font-bold"
           >
             Jetzt starten →
           </Button>

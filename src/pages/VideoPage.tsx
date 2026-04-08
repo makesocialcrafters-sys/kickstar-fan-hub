@@ -1,21 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Video, Profile } from "@/lib/types";
-import TipSection from "@/components/TipSection";
-import SuccessOverlay from "@/components/SuccessOverlay";
 
 const VideoPage = () => {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const isSuccess = searchParams.get("success") === "true";
-
   const [video, setVideo] = useState<Video | null>(null);
   const [player, setPlayer] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOwnVideo, setIsOwnVideo] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -39,15 +33,6 @@ const VideoPage = () => {
     load();
   }, [id]);
 
-  useEffect(() => {
-    if (isSuccess) {
-      setShowSuccess(true);
-      history.replaceState(null, "", window.location.pathname);
-    }
-  }, [isSuccess]);
-
-  const handleDismissSuccess = useCallback(() => setShowSuccess(false), []);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -68,8 +53,6 @@ const VideoPage = () => {
 
   return (
     <div className="min-h-screen pb-12">
-      {showSuccess && <SuccessOverlay onDismiss={handleDismissSuccess} />}
-
       <div className="container max-w-2xl px-4 pt-6">
         <div className="rounded-xl overflow-hidden bg-secondary aspect-video mb-6">
           {video.video_url ? (
@@ -109,7 +92,7 @@ const VideoPage = () => {
           </Link>
         )}
 
-        {isOwnVideo ? (
+        {isOwnVideo && (
           <div className="rounded-xl border border-card-border bg-card p-6 text-center space-y-4">
             <p className="text-2xl">🎥</p>
             <p className="text-foreground font-medium">
@@ -123,8 +106,6 @@ const VideoPage = () => {
               Link kopieren 📋
             </Button>
           </div>
-        ) : (
-          video && player && <TipSection videoId={video.id} playerId={player.id} />
         )}
       </div>
     </div>

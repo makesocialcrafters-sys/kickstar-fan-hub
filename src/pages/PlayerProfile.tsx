@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { formatEuro, relativeTime } from "@/lib/helpers";
+import { relativeTime } from "@/lib/helpers";
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile, Video } from "@/lib/types";
 
@@ -75,9 +75,6 @@ const PlayerProfile = () => {
           {player.bio && (
             <p className="text-muted-foreground mt-4 max-w-md mx-auto text-sm leading-relaxed">{player.bio}</p>
           )}
-          <p className="mt-4 text-sm">
-            ⚡ Hat schon <span className="text-neon font-semibold">{formatEuro(player.total_earnings)}</span> von Fans bekommen
-          </p>
         </div>
 
         <h2 className="font-display text-2xl mb-4">HIGHLIGHTS</h2>
@@ -105,16 +102,6 @@ const PlayerProfile = () => {
             ))}
           </div>
         )}
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border p-4">
-        <div className="container max-w-2xl">
-          <Link to={videos.length > 0 ? `/v/${videos[0].id}` : "#"}>
-            <button className="w-full bg-neon text-neon-foreground font-bold py-4 rounded-full text-base neon-glow hover:bg-neon/90 transition-colors">
-              Support ihn! 🔥
-            </button>
-          </Link>
-        </div>
       </div>
     </div>
   );

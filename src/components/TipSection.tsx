@@ -111,7 +111,7 @@ export default function TipSection({ videoId, playerId }: TipSectionProps) {
       >
         {loading
           ? "Wird weitergeleitet…"
-          : `🍺 ${effectiveAmount ? formatEuro(effectiveAmount) : "Betrag wählen"} Trinkgeld senden`}
+          : `${effectiveAmount ? formatEuro(effectiveAmount) : "Betrag wählen"} Trinkgeld senden`}
       </Button>
 
       <p className="text-xs text-muted-foreground text-center">

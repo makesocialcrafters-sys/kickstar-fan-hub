@@ -1,10 +1,3 @@
-export function formatEuro(cents: number): string {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(cents / 100);
-}
-
 export function slugify(name: string): string {
   return name
     .normalize('NFD')

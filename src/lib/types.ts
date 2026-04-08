@@ -30,14 +30,3 @@ export interface Video {
   created_at: string
 }
 
-export interface Tip {
-  id: string
-  player_id: string
-  video_id: string | null
-  amount: number
-  fan_name: string | null
-  message: string | null
-  stripe_session_id: string | null
-  status: 'pending' | 'completed' | 'refunded'
-  created_at: string
-}

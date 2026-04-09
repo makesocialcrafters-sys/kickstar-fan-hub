@@ -26,6 +26,7 @@ export interface Video {
   player_id: string
   title: string
   video_url: string
+  thumbnail_url?: string | null
   view_count: number
   created_at: string
 }

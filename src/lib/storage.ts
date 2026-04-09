@@ -2,6 +2,27 @@ import { supabase } from "@/integrations/supabase/client";
 
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024;
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime'];
+const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
+const ALLOWED_THUMBNAIL_TYPES = ['image/jpeg', 'image/png'];
+
+export function validateThumbnailFile(file: File): string | null {
+  if (!ALLOWED_THUMBNAIL_TYPES.includes(file.type))
+    return 'Nur JPG- und PNG-Dateien sind erlaubt.';
+  if (file.size > MAX_THUMBNAIL_SIZE)
+    return 'Die Datei ist zu groß. Maximal 5 MB erlaubt.';
+  return null;
+}
+
+export async function uploadThumbnail(userId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop();
+  const path = `${userId}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('thumbnails')
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+  if (error) throw new Error('Thumbnail-Upload fehlgeschlagen: ' + error.message);
+  const { data } = supabase.storage.from('thumbnails').getPublicUrl(path);
+  return data.publicUrl;
+}
 
 export function validateVideoFile(file: File): string | null {
   if (!ALLOWED_VIDEO_TYPES.includes(file.type))

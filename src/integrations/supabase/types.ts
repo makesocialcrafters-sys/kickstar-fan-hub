@@ -106,6 +106,7 @@ export type Database = {
           created_at: string
           id: string
           player_id: string
+          thumbnail_url: string | null
           title: string
           video_url: string
           view_count: number
@@ -114,6 +115,7 @@ export type Database = {
           created_at?: string
           id?: string
           player_id: string
+          thumbnail_url?: string | null
           title: string
           video_url: string
           view_count?: number
@@ -122,6 +124,7 @@ export type Database = {
           created_at?: string
           id?: string
           player_id?: string
+          thumbnail_url?: string | null
           title?: string
           video_url?: string
           view_count?: number

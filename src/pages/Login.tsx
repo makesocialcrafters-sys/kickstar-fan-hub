@@ -47,7 +47,7 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link to="/" className="font-display text-3xl text-neon"><Link to="/" className="font-display text-3xl text-neon">SCORLINK</Link></Link>
+          <Link to="/" className="font-display text-3xl text-neon">SCORLINK</Link>
           <h1 className="font-display text-4xl mt-6 mb-2">ANMELDEN</h1>
           <p className="text-muted-foreground">Willkommen zurück!</p>
         </div>

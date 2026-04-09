@@ -85,7 +85,6 @@ export async function uploadVideo(
   onProgress?.(100);
   return data.publicUrl;
 }
-  userId: string,
   file: File,
   onProgress?: (percent: number) => void
 ): Promise<string> {

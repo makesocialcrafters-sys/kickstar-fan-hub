@@ -77,10 +77,19 @@ const Dashboard = () => {
                 <Link
                   key={v.id}
                   to={`/v/${v.id}`}
-                  className="block rounded-xl border border-card-border bg-card p-4 hover:border-neon/30 transition-colors"
+                  className="flex gap-4 rounded-xl border border-card-border bg-card p-4 hover:border-neon/30 transition-colors"
                 >
-                  <p className="font-medium text-foreground">{v.title}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{relativeTime(v.created_at)}</p>
+                  <div className="w-24 h-16 rounded-lg bg-secondary shrink-0 overflow-hidden flex items-center justify-center">
+                    {v.thumbnail_url ? (
+                      <img src={v.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl">🎥</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground line-clamp-1">{v.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{relativeTime(v.created_at)}</p>
+                  </div>
                 </Link>
               ))}
             </div>

@@ -92,7 +92,11 @@ const PlayerProfile = () => {
                 className="rounded-xl border border-card-border bg-card overflow-hidden hover:border-neon/30 transition-colors group"
               >
                 <div className="aspect-video bg-secondary flex items-center justify-center overflow-hidden">
-                  <video src={v.video_url} muted playsInline preload="metadata" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  {v.thumbnail_url ? (
+                    <img src={v.thumbnail_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <video src={v.video_url} muted playsInline preload="metadata" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  )}
                 </div>
                 <div className="p-3">
                   <p className="text-sm font-medium text-foreground line-clamp-1">{v.title}</p>

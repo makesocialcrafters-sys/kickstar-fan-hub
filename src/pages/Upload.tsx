@@ -1,20 +1,23 @@
 import { useState, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import Navbar from "@/components/Navbar";
-import { Upload as UploadIcon } from "lucide-react";
+import { Upload as UploadIcon, ImagePlus, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadVideo, validateVideoFile } from "@/lib/storage";
+import { uploadVideo, validateVideoFile, uploadThumbnail, validateThumbnailFile } from "@/lib/storage";
 
 const Upload = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
+  const thumbRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -26,15 +29,27 @@ const Upload = () => {
   const handleFile = (f: File) => {
     setError("");
     const validationError = validateVideoFile(f);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    if (validationError) { setError(validationError); return; }
     setFile(f);
     if (!title) {
       const name = f.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
       setTitle(name.charAt(0).toUpperCase() + name.slice(1));
     }
+  };
+
+  const handleThumbnail = (f: File) => {
+    setError("");
+    const validationError = validateThumbnailFile(f);
+    if (validationError) { setError(validationError); return; }
+    setThumbnail(f);
+    setThumbPreview(URL.createObjectURL(f));
+  };
+
+  const removeThumbnail = () => {
+    setThumbnail(null);
+    if (thumbPreview) URL.revokeObjectURL(thumbPreview);
+    setThumbPreview(null);
+    if (thumbRef.current) thumbRef.current.value = "";
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -50,10 +65,15 @@ const Upload = () => {
     setUploading(true);
     setError("");
     try {
-      const videoUrl = await uploadVideo(user.id, file, setProgress);
+      let thumbnailUrl: string | undefined;
+      if (thumbnail) {
+        thumbnailUrl = await uploadThumbnail(user.id, thumbnail);
+        setProgress(10);
+      }
+      const videoUrl = await uploadVideo(user.id, file, (p) => setProgress(thumbnail ? 10 + p * 0.9 : p));
       const { data, error: dbError } = await supabase
         .from('videos')
-        .insert({ player_id: user.id, title, video_url: videoUrl })
+        .insert({ player_id: user.id, title, video_url: videoUrl, thumbnail_url: thumbnailUrl ?? null })
         .select('id')
         .single();
       if (dbError) throw dbError;
@@ -82,7 +102,7 @@ const Upload = () => {
               </Button>
             </div>
             <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1 h-12 rounded-full" onClick={() => { setDone(false); setFile(null); setTitle(""); setProgress(0); }}>
+              <Button variant="secondary" className="flex-1 h-12 rounded-full" onClick={() => { setDone(false); setFile(null); setTitle(""); setProgress(0); removeThumbnail(); }}>
                 Weiteres Video
               </Button>
               <Button variant="neon" className="flex-1 h-12 rounded-full" onClick={() => navigate("/dashboard")}>
@@ -102,6 +122,7 @@ const Upload = () => {
         <h1 className="font-display text-4xl mb-8 text-center">HIGHLIGHT HOCHLADEN</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Video dropzone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
@@ -111,13 +132,7 @@ const Upload = () => {
               dragOver ? "border-neon bg-neon/5" : file ? "border-neon/50 bg-card" : "border-card-border bg-card hover:border-muted-foreground/50"
             }`}
           >
-            <input
-              ref={fileRef}
-              type="file"
-              accept="video/mp4,video/quicktime"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            />
+            <input ref={fileRef} type="file" accept="video/mp4,video/quicktime" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
             <UploadIcon className="mx-auto w-10 h-10 text-muted-foreground mb-3" />
             {file ? (
               <p className="text-foreground font-medium">{file.name}</p>
@@ -127,6 +142,32 @@ const Upload = () => {
                 <p className="text-muted-foreground text-sm mt-1">oder klicken zum Auswählen · MP4/MOV · max. 20 MB</p>
               </>
             )}
+          </div>
+
+          {/* Thumbnail selector */}
+          <div className="space-y-2">
+            <Label>Titelbild (optional)</Label>
+            {thumbPreview ? (
+              <div className="relative rounded-xl overflow-hidden border border-card-border bg-card">
+                <img src={thumbPreview} alt="Titelbild Vorschau" className="w-full aspect-video object-cover" />
+                <button
+                  type="button"
+                  onClick={removeThumbnail}
+                  className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur-sm p-1.5 hover:bg-background transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => thumbRef.current?.click()}
+                className="rounded-xl border-2 border-dashed border-card-border bg-card p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+              >
+                <ImagePlus className="mx-auto w-8 h-8 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground text-sm">JPG/PNG · max. 5 MB</p>
+              </div>
+            )}
+            <input ref={thumbRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => e.target.files?.[0] && handleThumbnail(e.target.files[0])} />
           </div>
 
           {error && <p className="text-destructive text-sm">{error}</p>}
@@ -150,7 +191,7 @@ const Upload = () => {
           {uploading && (
             <div className="space-y-2">
               <Progress value={progress} className="h-2 [&>div]:bg-neon" />
-              <p className="text-sm text-muted-foreground text-center">{progress}%</p>
+              <p className="text-sm text-muted-foreground text-center">{Math.round(progress)}%</p>
             </div>
           )}
 

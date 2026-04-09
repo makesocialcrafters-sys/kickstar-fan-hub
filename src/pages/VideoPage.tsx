@@ -58,6 +58,7 @@ const VideoPage = () => {
           {video.video_url ? (
             <video
               src={video.video_url}
+              poster={video.thumbnail_url || undefined}
               autoPlay
               muted
               playsInline

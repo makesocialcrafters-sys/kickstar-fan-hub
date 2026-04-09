@@ -1,50 +1,51 @@
 
 
-## Stripe Payment Integration for FootyTips
+## Titelbild (Thumbnail) für Highlight-Videos
 
-### Overview
-Implement the complete Stripe checkout flow: two edge functions (checkout + webhook), a TipSection component, a SuccessOverlay with canvas confetti, and wire everything into VideoPage.
+### Überblick
+Spieler können beim Upload ein Titelbild (JPG/PNG) für ihr Video auswählen. Das Bild wird in Supabase Storage gespeichert und überall angezeigt, wo Videos dargestellt werden.
 
-### Prerequisites — Secrets
-The following secrets need to be added before the edge functions will work:
-- **STRIPE_SECRET_KEY** — from Stripe Dashboard → Developers → API Keys
-- **STRIPE_WEBHOOK_SECRET** — from Stripe Dashboard → Developers → Webhooks
+### Änderungen
 
-These will be requested via the `add_secret` tool during implementation.
+**1. Datenbank-Migration**
+- Neue Spalte `thumbnail_url` (text, nullable) zur `videos`-Tabelle hinzufügen.
 
-### Changes
+**2. Storage**
+- Neuen öffentlichen Bucket `thumbnails` erstellen (per Migration).
+- RLS-Policy: Authentifizierte User können in ihren eigenen Ordner hochladen.
 
-**1. Add secrets: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`**
+**3. Upload-Logik (`src/lib/storage.ts`)**
+- Neue Funktion `uploadThumbnail(userId, file)` — lädt Bild in `thumbnails/{userId}/{timestamp}.{ext}` hoch, gibt Public URL zurück.
+- Validierung: nur JPG/PNG, max 5 MB.
 
-**2. Create `supabase/functions/checkout/index.ts`**
-- Accepts `{ videoId, playerId, amount, fanName, message }`
-- Creates a pending tip in DB, then creates a Stripe checkout session
-- Returns `{ url }` for redirect
-- CORS headers included
+**4. Upload-Seite (`src/pages/Upload.tsx`)**
+- Neuer optionaler Bereich unter dem Video-Dropzone: "Titelbild auswählen" mit Bildvorschau.
+- Separater File-Input für Bilder (accept: image/jpeg, image/png).
+- Beim Submit: Thumbnail zuerst hochladen, dann `thumbnail_url` mit in den DB-Insert übergeben.
 
-**3. Create `supabase/functions/stripe-webhook/index.ts`**
-- Verifies Stripe signature
-- On `checkout.session.completed`: updates tip status to `completed` using `tip_id` from metadata
-- The existing `update_player_earnings` trigger handles earnings automatically
+**5. Video-Typ (`src/lib/types.ts`)**
+- `thumbnail_url?: string` zum `Video`-Interface hinzufügen.
 
-**4. Create `src/components/TipSection.tsx`**
-- Extracted tip UI: preset amounts (1€, 3€, 5€, 10€), custom input, fan name, message
-- Calls `supabase.functions.invoke("checkout")` and redirects to Stripe
-- Props: `videoId`, `playerId`
+**6. Anzeige des Titelbilds**
+- **Dashboard** (`Dashboard.tsx`): Thumbnail als kleines Vorschaubild neben dem Videotitel in der Liste.
+- **PlayerProfile** (`PlayerProfile.tsx`): Thumbnail in der Video-Karte anzeigen.
+- **VideoPage** (`VideoPage.tsx`): Thumbnail als Poster-Attribut des Video-Elements verwenden.
+- **Entdecken** (`Entdecken.tsx`): Falls Videos dort angezeigt werden, ebenfalls Thumbnail nutzen.
 
-**5. Create `src/components/SuccessOverlay.tsx`**
-- Canvas-based confetti animation (no external dependency needed)
-- Auto-dismisses after 4 seconds, click to dismiss
-- "DANKE! Dein Support ist angekommen!"
+### Technische Details
 
-**6. Update `src/pages/VideoPage.tsx`**
-- Remove inline tip form and confetti overlay
-- Import and use `<TipSection>` and `<SuccessOverlay>`
-- On `?success=true`: show overlay, clean URL with `history.replaceState`
-- Keep existing `isOwnVideo` logic (share box vs tip section)
+```sql
+-- Migration
+ALTER TABLE public.videos ADD COLUMN thumbnail_url text;
 
-### Stripe Webhook Setup (user action after deploy)
-Register webhook URL in Stripe Dashboard:
-- URL: `https://pxzcezracqyrbnixlycg.supabase.co/functions/v1/stripe-webhook`
-- Event: `checkout.session.completed`
+INSERT INTO storage.buckets (id, name, public) VALUES ('thumbnails', 'thumbnails', true);
+
+CREATE POLICY "Users can upload own thumbnails"
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'thumbnails' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "Thumbnails are publicly readable"
+ON storage.objects FOR SELECT TO public
+USING (bucket_id = 'thumbnails');
+```
 

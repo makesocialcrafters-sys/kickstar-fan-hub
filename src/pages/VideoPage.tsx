@@ -107,6 +107,14 @@ const VideoPage = () => {
     <div className="min-h-screen pb-12">
       {isOwnVideo && <Navbar showProfile />}
       <div className={`container max-w-2xl px-4 ${isOwnVideo ? 'pt-20' : 'pt-6'}`}>
+        {isOwnVideo && (
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          >
+            ← Dashboard
+          </Link>
+        )}
         <div className="rounded-xl overflow-hidden bg-secondary aspect-video mb-6">
           {video.video_url ? (
             <video

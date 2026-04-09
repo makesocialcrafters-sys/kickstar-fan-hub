@@ -51,7 +51,7 @@ const Register = () => {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link to="/" className="font-display text-3xl text-neon">FOOTYTIPS</Link>
+          <Link to="/" className="font-display text-3xl text-neon"><Link to="/" className="font-display text-3xl text-neon">SCORLINK</Link></Link>
           <h1 className="font-display text-4xl mt-6 mb-2">KONTO ERSTELLEN</h1>
           <p className="text-muted-foreground">Werde Teil der Community</p>
         </div>

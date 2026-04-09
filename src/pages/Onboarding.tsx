@@ -121,7 +121,7 @@ const Onboarding = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <span className="font-display text-3xl text-neon">FOOTYTIPS</span>
+          <span className="font-display text-3xl text-neon">SCORLINK</span>
         </div>
 
         {step <= 3 && (
@@ -258,7 +258,7 @@ const Onboarding = () => {
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                footytips.app/p/<span className="text-neon">{username || "…"}</span>
+                scorlink.app/p/<span className="text-neon">{username || "…"}</span>
               </p>
               {username.length >= 3 && !checkingUsername && usernameAvailable === false && (
                 <p className="text-destructive text-sm">Dieser Username ist leider vergeben.</p>
@@ -288,7 +288,7 @@ const Onboarding = () => {
             <p className="text-muted-foreground">Dein öffentliches Profil ist live:</p>
             <div className="bg-card border border-card-border rounded-xl p-4 flex items-center justify-between gap-3">
               <span className="text-sm text-foreground truncate">
-                footytips.app/p/{username}
+                scorlink.app/p/{username}
               </span>
               <Button
                 variant="neonOutline"

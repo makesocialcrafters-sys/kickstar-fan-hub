@@ -10,7 +10,7 @@ const Navbar = ({ showProfile, username }: { showProfile?: boolean; username?: s
     <nav className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="container flex h-14 items-center justify-between">
         <Link to="/" className="font-display text-2xl text-neon tracking-wider">
-          FOOTYTIPS
+          SCORLINK
         </Link>
         <div className="flex items-center gap-3">
           {showProfile && username && (

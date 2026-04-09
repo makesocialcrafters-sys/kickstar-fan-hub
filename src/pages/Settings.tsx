@@ -302,7 +302,7 @@ const Settings = () => {
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                footytips.app/p/<span className="text-neon">{username || "…"}</span>
+                scorlink.app/p/<span className="text-neon">{username || "…"}</span>
               </p>
               {username.length >= 3 && !checkingUsername && usernameAvailable === false && (
                 <p className="text-destructive text-sm">Dieser Username ist leider vergeben.</p>

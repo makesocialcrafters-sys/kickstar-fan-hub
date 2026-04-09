@@ -28,7 +28,7 @@ export default function Entdecken() {
       <nav className="sticky top-0 z-50 border-b border-card-border bg-background/80 backdrop-blur-md">
         <div className="container flex h-14 items-center justify-between">
           <Link to="/" className="font-display text-xl text-neon">
-            FOOTYTIPS
+            SCORLINK
           </Link>
           <Link
             to="/login"

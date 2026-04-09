@@ -12,15 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { relativeTime } from "@/lib/helpers";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,8 +33,6 @@ const Dashboard = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
-  const [editTitle, setEditTitle] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -140,14 +130,6 @@ const Dashboard = () => {
                   </Link>
 
                   <div className="flex flex-col gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={() => handleEdit(v)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -181,23 +163,6 @@ const Dashboard = () => {
           )}
         </div>
 
-        <Dialog open={!!editingVideo} onOpenChange={(open) => !open && setEditingVideo(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Titel bearbeiten</DialogTitle>
-            </DialogHeader>
-            <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-              maxLength={100}
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingVideo(null)}>Abbrechen</Button>
-              <Button variant="neon" onClick={handleSaveTitle} disabled={!editTitle.trim()}>Speichern</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

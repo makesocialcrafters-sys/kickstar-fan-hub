@@ -12,7 +12,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteVideoAssets } from "@/lib/storage";
 import type { Video, Profile } from "@/lib/types";
@@ -25,6 +33,8 @@ const VideoPage = () => {
   const [loading, setLoading] = useState(true);
   const [isOwnVideo, setIsOwnVideo] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
   const viewCounted = useRef(false);
 
   useEffect(() => {
@@ -55,6 +65,13 @@ const VideoPage = () => {
     };
     load();
   }, [id]);
+
+  const handleSaveTitle = async () => {
+    if (!video || !editTitle.trim()) return;
+    await supabase.from("videos").update({ title: editTitle.trim() }).eq("id", video.id);
+    setVideo({ ...video, title: editTitle.trim() });
+    setEditingTitle(false);
+  };
 
   const handleDelete = async () => {
     if (!video) return;
@@ -106,7 +123,19 @@ const VideoPage = () => {
           )}
         </div>
 
-        <h1 className="font-display text-3xl mb-4">{video.title.toUpperCase()}</h1>
+        <div className="flex items-center gap-2 mb-4">
+          <h1 className="font-display text-3xl">{video.title.toUpperCase()}</h1>
+          {isOwnVideo && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground shrink-0"
+              onClick={() => { setEditTitle(video.title); setEditingTitle(true); }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
 
         {player && (
           <Link
@@ -167,6 +196,24 @@ const VideoPage = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={editingTitle} onOpenChange={(open) => !open && setEditingTitle(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Titel bearbeiten</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+            maxLength={100}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingTitle(false)}>Abbrechen</Button>
+            <Button variant="neon" onClick={handleSaveTitle} disabled={!editTitle.trim()}>Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

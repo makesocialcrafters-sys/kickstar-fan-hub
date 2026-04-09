@@ -85,9 +85,6 @@ export async function uploadVideo(
   onProgress?.(100);
   return data.publicUrl;
 }
-  file: File,
-  onProgress?: (percent: number) => void
-): Promise<string> {
   const ext = file.name.split('.').pop();
   const path = `${userId}/${Date.now()}.${ext}`;
   onProgress?.(20);

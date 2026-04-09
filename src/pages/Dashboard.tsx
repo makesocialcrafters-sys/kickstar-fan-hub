@@ -59,17 +59,7 @@ const Dashboard = () => {
     setDeletingId(null);
   };
 
-  const handleEdit = (video: Video) => {
-    setEditingVideo(video);
-    setEditTitle(video.title);
-  };
 
-  const handleSaveTitle = async () => {
-    if (!editingVideo || !editTitle.trim()) return;
-    await supabase.from("videos").update({ title: editTitle.trim() }).eq("id", editingVideo.id);
-    setVideos((prev) => prev.map((v) => v.id === editingVideo.id ? { ...v, title: editTitle.trim() } : v));
-    setEditingVideo(null);
-  };
 
   if (loading || !profile) {
     return (

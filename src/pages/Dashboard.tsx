@@ -12,7 +12,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Trash2, Pencil } from "lucide-react";
 import { relativeTime } from "@/lib/helpers";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +41,8 @@ const Dashboard = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [editTitle, setEditTitle] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -57,6 +67,18 @@ const Dashboard = () => {
       // silently fail
     }
     setDeletingId(null);
+  };
+
+  const handleEdit = (video: Video) => {
+    setEditingVideo(video);
+    setEditTitle(video.title);
+  };
+
+  const handleSaveTitle = async () => {
+    if (!editingVideo || !editTitle.trim()) return;
+    await supabase.from("videos").update({ title: editTitle.trim() }).eq("id", editingVideo.id);
+    setVideos((prev) => prev.map((v) => v.id === editingVideo.id ? { ...v, title: editTitle.trim() } : v));
+    setEditingVideo(null);
   };
 
   if (loading || !profile) {
@@ -117,37 +139,65 @@ const Dashboard = () => {
                     </div>
                   </Link>
 
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
-                        disabled={deletingId === v.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Video löschen?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          „{v.title}" wird unwiderruflich gelöscht.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(v)}>
-                          Löschen
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() => handleEdit(v)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive"
+                          disabled={deletingId === v.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Video löschen?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            „{v.title}" wird unwiderruflich gelöscht.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(v)}>
+                            Löschen
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        <Dialog open={!!editingVideo} onOpenChange={(open) => !open && setEditingVideo(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Titel bearbeiten</DialogTitle>
+            </DialogHeader>
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+              maxLength={100}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingVideo(null)}>Abbrechen</Button>
+              <Button variant="neon" onClick={handleSaveTitle} disabled={!editTitle.trim()}>Speichern</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

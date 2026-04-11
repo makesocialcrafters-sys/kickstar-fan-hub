@@ -17,7 +17,7 @@ const OnboardingRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (profile?.username) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/profil" replace />;
   }
 
   return <>{children}</>;

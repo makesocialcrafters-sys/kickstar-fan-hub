@@ -1,14 +1,10 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import Navbar from "@/components/Navbar";
-import { Upload as UploadIcon, ImagePlus, X } from "lucide-react";
+import { ArrowLeft, Video, ImagePlus, X, Copy, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadVideo, validateVideoFile, uploadThumbnail, validateThumbnailFile } from "@/lib/storage";
+import BottomNav from "@/components/BottomNav";
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -24,12 +20,12 @@ const Upload = () => {
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const [videoId, setVideoId] = useState("");
-  const [dragOver, setDragOver] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleFile = (f: File) => {
     setError("");
-    const validationError = validateVideoFile(f);
-    if (validationError) { setError(validationError); return; }
+    const err = validateVideoFile(f);
+    if (err) { setError(err); return; }
     setFile(f);
     if (!title) {
       const name = f.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
@@ -38,9 +34,8 @@ const Upload = () => {
   };
 
   const handleThumbnail = (f: File) => {
-    setError("");
-    const validationError = validateThumbnailFile(f);
-    if (validationError) { setError(validationError); return; }
+    const err = validateThumbnailFile(f);
+    if (err) { setError(err); return; }
     setThumbnail(f);
     setThumbPreview(URL.createObjectURL(f));
   };
@@ -50,13 +45,6 @@ const Upload = () => {
     if (thumbPreview) URL.revokeObjectURL(thumbPreview);
     setThumbPreview(null);
     if (thumbRef.current) thumbRef.current.value = "";
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    if (f) handleFile(f);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,9 +60,9 @@ const Upload = () => {
       }
       const videoUrl = await uploadVideo(user.id, file, (p) => setProgress(thumbnail ? 10 + p * 0.9 : p));
       const { data, error: dbError } = await supabase
-        .from('videos')
+        .from("videos")
         .insert({ player_id: user.id, title, video_url: videoUrl, thumbnail_url: thumbnailUrl ?? null })
-        .select('id')
+        .select("id")
         .single();
       if (dbError) throw dbError;
       setVideoId(data.id);
@@ -87,124 +75,144 @@ const Upload = () => {
   };
 
   if (done) {
-    const videoLink = `${window.location.origin}/v/${videoId}`;
+    const link = `${window.location.origin}/v/${videoId}`;
+    const doCopy = () => {
+      navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
     return (
-      <div className="min-h-screen">
-        <Navbar showProfile />
-        <div className="container pt-24 max-w-lg text-center">
-          <div className="animate-fade-in-up space-y-6">
-            <p className="text-6xl">🔥</p>
-            <h1 className="font-display text-4xl text-neon neon-text-glow">UPLOAD ERFOLGREICH!</h1>
-            <div className="bg-card border border-card-border rounded-xl p-4 flex items-center justify-between gap-3">
-              <span className="text-sm truncate">{videoLink}</span>
-              <Button variant="neonOutline" size="sm" onClick={() => navigator.clipboard.writeText(videoLink)}>
-                Kopieren
-              </Button>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1 h-12 rounded-full" onClick={() => { setDone(false); setFile(null); setTitle(""); setProgress(0); removeThumbnail(); }}>
-                Weiteres Video
-              </Button>
-              <Button variant="neon" className="flex-1 h-12 rounded-full" onClick={() => navigate("/dashboard")}>
-                Zum Dashboard
-              </Button>
-            </div>
-          </div>
+      <div className="min-h-screen flex flex-col items-center justify-center px-5 pb-28">
+        <p className="text-6xl mb-4">🔥</p>
+        <h1 className="font-display text-3xl mb-2">Highlight online!</h1>
+        <p className="text-muted-foreground text-sm mb-6">Teile den Link mit deinen Fans</p>
+        <div
+          className="w-full rounded-2xl flex items-center justify-between gap-3 px-4 py-3 mb-6"
+          style={{ background: "#111", border: "1px solid hsl(var(--border))" }}
+        >
+          <p className="text-sm text-foreground truncate">{link}</p>
+          <button onClick={doCopy} className="shrink-0">
+            {copied ? <Check size={18} color="#00C853" /> : <Copy size={18} color="#666" />}
+          </button>
         </div>
+        <button
+          onClick={doCopy}
+          className="w-full py-4 rounded-2xl font-semibold text-base mb-3"
+          style={{ background: "#00C853", color: "#000" }}
+        >
+          {copied ? "Kopiert! ✓" : "Link kopieren"}
+        </button>
+        <button
+          onClick={() => navigate("/profil")}
+          className="w-full py-4 rounded-2xl font-semibold text-base"
+          style={{ background: "#1a1a1a", color: "#fff" }}
+        >
+          Zum Profil
+        </button>
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <Navbar showProfile />
-      <div className="container pt-24 max-w-lg">
-        <h1 className="font-display text-4xl mb-8 text-center">HIGHLIGHT HOCHLADEN</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Video dropzone */}
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => fileRef.current?.click()}
-            className={`rounded-xl border-2 border-dashed p-10 text-center cursor-pointer transition-colors ${
-              dragOver ? "border-neon bg-neon/5" : file ? "border-neon/50 bg-card" : "border-card-border bg-card hover:border-muted-foreground/50"
-            }`}
-          >
-            <input ref={fileRef} type="file" accept="video/mp4,video/quicktime" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
-            <UploadIcon className="mx-auto w-10 h-10 text-muted-foreground mb-3" />
-            {file ? (
-              <p className="text-foreground font-medium">{file.name}</p>
-            ) : (
-              <>
-                <p className="text-foreground font-medium">Video hierher ziehen</p>
-                <p className="text-muted-foreground text-sm mt-1">oder klicken zum Auswählen · MP4/MOV · max. 20 MB</p>
-              </>
-            )}
-          </div>
-
-          {/* Thumbnail selector */}
-          <div className="space-y-2">
-            <Label>Titelbild (optional)</Label>
-            {thumbPreview ? (
-              <div className="relative rounded-xl overflow-hidden border border-card-border bg-card">
-                <img src={thumbPreview} alt="Titelbild Vorschau" className="w-full aspect-video object-cover" />
-                <button
-                  type="button"
-                  onClick={removeThumbnail}
-                  className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur-sm p-1.5 hover:bg-background transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div
-                onClick={() => thumbRef.current?.click()}
-                className="rounded-xl border-2 border-dashed border-card-border bg-card p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
-              >
-                <ImagePlus className="mx-auto w-8 h-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground text-sm">JPG/PNG · max. 5 MB</p>
-              </div>
-            )}
-            <input ref={thumbRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => e.target.files?.[0] && handleThumbnail(e.target.files[0])} />
-          </div>
-
-          {error && <p className="text-destructive text-sm">{error}</p>}
-
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Label>Titel</Label>
-              <span className={`text-xs ${title.length > 80 ? "text-destructive" : "text-muted-foreground"}`}>
-                {title.length}/80
-              </span>
-            </div>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value.slice(0, 80))}
-              placeholder="z.B. Traumtor aus 25 Metern"
-              className="bg-card border-card-border h-12"
-              required
-            />
-          </div>
-
-          {uploading && (
-            <div className="space-y-2">
-              <Progress value={progress} className="h-2 [&>div]:bg-neon" />
-              <p className="text-sm text-muted-foreground text-center">{Math.round(progress)}%</p>
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            variant="neon"
-            className="w-full h-12 rounded-full"
-            disabled={!file || !title.trim() || uploading || title.length > 80}
-          >
-            {uploading ? "Wird hochgeladen…" : "Video hochladen"}
-          </Button>
-        </form>
+    <div className="min-h-screen pb-28">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 pt-12 pb-4">
+        <button onClick={() => navigate(-1)} className="tap-target flex items-center justify-center" style={{ color: "#fff" }}>
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="font-display text-xl">Highlight hochladen</h1>
       </div>
+
+      <form onSubmit={handleSubmit} className="px-5 space-y-5">
+        {/* Video picker */}
+        <div
+          onClick={() => fileRef.current?.click()}
+          className="w-full rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer"
+          style={{
+            background: file ? "#0a1f0a" : "#111",
+            border: `2px dashed ${file ? "#00C853" : "#2a2a2a"}`,
+            minHeight: 160,
+            padding: 24,
+          }}
+        >
+          <input ref={fileRef} type="file" accept="video/mp4,video/quicktime" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          <Video size={32} color={file ? "#00C853" : "#444"} />
+          {file ? (
+            <>
+              <p className="text-sm text-foreground font-medium">{file.name}</p>
+              <p className="text-xs" style={{ color: "#00C853" }}>✓ Bereit zum Hochladen</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-foreground font-medium">Video auswählen</p>
+              <p className="text-xs text-muted-foreground">MP4 oder MOV · max. 20 MB</p>
+            </>
+          )}
+        </div>
+
+        {/* Thumbnail */}
+        {thumbPreview ? (
+          <div className="relative rounded-2xl overflow-hidden" style={{ border: "1px solid hsl(var(--border))" }}>
+            <img src={thumbPreview} alt="Titelbild" className="w-full aspect-video object-cover" />
+            <button type="button" onClick={removeThumbnail} className="absolute top-2 right-2 rounded-full p-1.5" style={{ background: "rgba(0,0,0,0.6)" }}>
+              <X size={16} color="#fff" />
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => thumbRef.current?.click()}
+            className="w-full rounded-2xl flex items-center gap-3 cursor-pointer px-4"
+            style={{ background: "#111", border: "1px solid hsl(var(--border))", height: 56 }}
+          >
+            <ImagePlus size={20} color="#444" />
+            <span className="text-sm text-muted-foreground">Titelbild hinzufügen (optional)</span>
+          </div>
+        )}
+        <input ref={thumbRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => e.target.files?.[0] && handleThumbnail(e.target.files[0])} />
+
+        {/* Title */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Titel</label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value.slice(0, 80))}
+            placeholder="z.B. Traumtor gegen den FC Rivalen"
+            className="w-full rounded-2xl px-4 outline-none text-foreground text-base"
+            style={{ background: "#111", border: "1px solid hsl(var(--border))", height: 56, caretColor: "#00C853" }}
+            required
+          />
+          <p className="text-xs text-right" style={{ color: title.length > 70 ? "#FF3B30" : "#444" }}>
+            {title.length}/80
+          </p>
+        </div>
+
+        {error && <p className="text-destructive text-sm">{error}</p>}
+
+        {/* Progress */}
+        {uploading && (
+          <div className="space-y-2">
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "#1a1a1a" }}>
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${progress}%`, background: "#00C853" }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center">{Math.round(progress)}%</p>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={!file || !title.trim() || uploading || title.length > 80}
+          className="w-full py-4 rounded-2xl font-semibold text-base disabled:opacity-40"
+          style={{ background: "#00C853", color: "#000" }}
+        >
+          {uploading ? `Hochladen… ${Math.round(progress)}%` : "Hochladen"}
+        </button>
+      </form>
+
+      <BottomNav />
     </div>
   );
 };

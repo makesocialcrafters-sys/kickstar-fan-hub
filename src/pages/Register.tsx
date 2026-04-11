@@ -25,10 +25,7 @@ const Register = () => {
       },
     });
     setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
+    if (error) { setError(error.message); return; }
     navigate("/onboarding");
   };
 
@@ -38,7 +35,7 @@ const Register = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/profil`,
       },
     });
     if (error) {
@@ -51,7 +48,7 @@ const Register = () => {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link to="/" className="font-display text-3xl text-neon"><Link to="/" className="font-display text-3xl text-neon">SCORLINK</Link></Link>
+          <Link to="/" className="font-display text-3xl" style={{ color: "#00C853" }}>SCORLINK</Link>
           <h1 className="font-display text-4xl mt-6 mb-2">KONTO ERSTELLEN</h1>
           <p className="text-muted-foreground">Werde Teil der Community</p>
         </div>
@@ -59,7 +56,7 @@ const Register = () => {
         <Button
           type="button"
           variant="outline"
-          className="w-full h-12 rounded-full text-base border-card-border bg-card hover:bg-muted gap-3"
+          className="w-full h-12 rounded-full text-base gap-3"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
         >
@@ -74,7 +71,7 @@ const Register = () => {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-card-border" />
+            <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">oder</span>
@@ -84,51 +81,25 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="name">Vollständiger Name</Label>
-            <Input
-              id="name"
-              placeholder="Max Mustermann"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-              className="bg-card border-card-border h-12"
-            />
+            <Input id="name" placeholder="Max Mustermann" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="h-12" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">E-Mail</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="max@beispiel.de"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-              className="bg-card border-card-border h-12"
-            />
+            <Input id="email" type="email" placeholder="max@beispiel.de" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="h-12" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Passwort</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Mindestens 6 Zeichen"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-              minLength={6}
-              className="bg-card border-card-border h-12"
-            />
+            <Input id="password" type="password" placeholder="Mindestens 6 Zeichen" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} className="h-12" />
           </div>
-
           {error && <p className="text-destructive text-sm">{error}</p>}
-
-          <Button type="submit" variant="neon" className="w-full h-12 rounded-full text-base" disabled={loading}>
+          <Button type="submit" className="w-full h-12 rounded-full text-base" style={{ background: "#00C853", color: "#000" }} disabled={loading}>
             {loading ? "Wird erstellt…" : "Registrieren"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Schon ein Konto?{" "}
-          <Link to="/login" className="text-neon hover:underline">Anmelden</Link>
+          <Link to="/login" style={{ color: "#00C853" }} className="hover:underline">Anmelden</Link>
         </p>
       </div>
     </div>

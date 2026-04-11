@@ -25,7 +25,7 @@ const Login = () => {
       setError("E-Mail oder Passwort ist falsch.");
       return;
     }
-    navigate("/dashboard");
+    navigate("/profil");
   };
 
   const handleGoogleLogin = async () => {
@@ -34,7 +34,7 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/profil`,
       },
     });
     if (error) {
@@ -47,7 +47,7 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link to="/" className="font-display text-3xl text-neon">SCORLINK</Link>
+          <Link to="/" className="font-display text-3xl" style={{ color: "#00C853" }}>SCORLINK</Link>
           <h1 className="font-display text-4xl mt-6 mb-2">ANMELDEN</h1>
           <p className="text-muted-foreground">Willkommen zurück!</p>
         </div>
@@ -55,7 +55,7 @@ const Login = () => {
         <Button
           type="button"
           variant="outline"
-          className="w-full h-12 rounded-full text-base border-card-border bg-card hover:bg-muted gap-3"
+          className="w-full h-12 rounded-full text-base gap-3"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
         >
@@ -70,7 +70,7 @@ const Login = () => {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-card-border" />
+            <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">oder</span>
@@ -80,39 +80,21 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="email">E-Mail</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="max@beispiel.de"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-              className="bg-card border-card-border h-12"
-            />
+            <Input id="email" type="email" placeholder="max@beispiel.de" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="h-12" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Passwort</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Dein Passwort"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-              className="bg-card border-card-border h-12"
-            />
+            <Input id="password" type="password" placeholder="Dein Passwort" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required className="h-12" />
           </div>
-
           {error && <p className="text-destructive text-sm">{error}</p>}
-
-          <Button type="submit" variant="neon" className="w-full h-12 rounded-full text-base" disabled={loading}>
+          <Button type="submit" className="w-full h-12 rounded-full text-base" style={{ background: "#00C853", color: "#000" }} disabled={loading}>
             {loading ? "Wird geladen…" : "Anmelden"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Noch kein Konto?{" "}
-          <Link to="/register" className="text-neon hover:underline">Registrieren</Link>
+          <Link to="/register" style={{ color: "#00C853" }} className="hover:underline">Registrieren</Link>
         </p>
       </div>
     </div>

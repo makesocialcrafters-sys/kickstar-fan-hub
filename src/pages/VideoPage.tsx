@@ -1,27 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Share2, Trash2, Pencil, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteVideoAssets } from "@/lib/storage";
 import type { Video, Profile } from "@/lib/types";
@@ -33,9 +12,12 @@ const VideoPage = () => {
   const [player, setPlayer] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOwnVideo, setIsOwnVideo] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
   const viewCounted = useRef(false);
 
   useEffect(() => {
@@ -45,33 +27,30 @@ const VideoPage = () => {
         supabase.auth.getUser(),
       ]);
       if (!vid) { setLoading(false); return; }
-
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", vid.player_id)
-        .single();
-
+      const { data: prof } = await supabase.from("profiles").select("*").eq("id", vid.player_id).single();
       const own = user?.id === vid.player_id;
       setIsOwnVideo(own);
       setVideo(vid as unknown as Video);
+      setNewTitle(vid.title);
       setPlayer(prof as unknown as Profile);
-      setLoading(false);
-
-      // Increment view count for non-own videos
       if (!own && !viewCounted.current) {
         viewCounted.current = true;
-        supabase.rpc("increment_view_count", { video_id: vid.id });
+        supabase.rpc("increment_view_count", { video_id: id! });
       }
+      setLoading(false);
     };
     load();
   }, [id]);
 
-  const handleSaveTitle = async () => {
-    if (!video || !editTitle.trim()) return;
-    await supabase.from("videos").update({ title: editTitle.trim() }).eq("id", video.id);
-    setVideo({ ...video, title: editTitle.trim() });
-    setEditingTitle(false);
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ url, title: video?.title });
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleDelete = async () => {
@@ -79,10 +58,21 @@ const VideoPage = () => {
     setDeleting(true);
     try {
       await deleteVideoAssets(video);
-      navigate("/dashboard");
-    } catch {
+      navigate("/profil");
+    } catch (err) {
+      console.error(err);
+    } finally {
       setDeleting(false);
     }
+  };
+
+  const handleSaveTitle = async () => {
+    if (!video || !newTitle.trim()) return;
+    setSavingTitle(true);
+    await supabase.from("videos").update({ title: newTitle.trim() }).eq("id", video.id);
+    setVideo({ ...video, title: newTitle.trim() });
+    setEditingTitle(false);
+    setSavingTitle(false);
   };
 
   if (loading) {
@@ -95,135 +85,136 @@ const VideoPage = () => {
 
   if (!video) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
         <p className="text-5xl">🤷</p>
-        <h1 className="font-display text-3xl">VIDEO NICHT GEFUNDEN</h1>
-        <Link to="/" className="text-neon hover:underline text-sm">Zur Startseite</Link>
+        <h1 className="font-display text-2xl">Video nicht gefunden</h1>
+        <Link to="/entdecken" className="text-sm font-medium" style={{ color: "#00C853" }}>
+          Zurück zum Feed
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-12">
-      {isOwnVideo && <Navbar showProfile />}
-      <div className={`container max-w-2xl px-4 ${isOwnVideo ? 'pt-20' : 'pt-6'}`}>
+    <div className="min-h-screen pb-8">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 pt-12 pb-3">
+        <button onClick={() => navigate(-1)} className="tap-target flex items-center justify-center" style={{ color: "#fff" }}>
+          <ArrowLeft size={24} />
+        </button>
         {isOwnVideo && (
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-          >
-            ← Dashboard
-          </Link>
+          <button onClick={() => setShowDeleteConfirm(true)} className="tap-target flex items-center justify-center" style={{ color: "#FF3B30" }}>
+            <Trash2 size={20} />
+          </button>
         )}
-        <div className="rounded-xl overflow-hidden bg-secondary aspect-video mb-6">
-          {video.video_url ? (
-            <video
-              src={video.video_url}
-              poster={video.thumbnail_url || undefined}
-              autoPlay
-              muted
-              playsInline
-              controls
-              className="w-full h-full object-cover"
-            />
+      </div>
+
+      {/* Video */}
+      <div className="px-4 mb-4">
+        <div className="rounded-2xl overflow-hidden bg-secondary aspect-video">
+          <video
+            src={video.video_url}
+            poster={video.thumbnail_url || undefined}
+            autoPlay
+            muted
+            playsInline
+            controls
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+
+      {/* Title & Info */}
+      <div className="px-5 space-y-4">
+        <div>
+          {editingTitle ? (
+            <div className="flex items-center gap-2">
+              <input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="flex-1 bg-transparent text-foreground font-display text-xl border-b outline-none pb-1"
+                style={{ borderColor: "#00C853" }}
+                autoFocus
+                maxLength={80}
+              />
+              <button onClick={handleSaveTitle} disabled={savingTitle} className="tap-target flex items-center justify-center" style={{ color: "#00C853" }}>
+                <Check size={22} />
+              </button>
+              <button onClick={() => { setEditingTitle(false); setNewTitle(video.title); }} className="tap-target flex items-center justify-center" style={{ color: "#666" }}>
+                <X size={22} />
+              </button>
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-5xl">⚽</p>
+            <div className="flex items-start gap-2">
+              <h1 className="font-display text-xl flex-1">{video.title}</h1>
+              {isOwnVideo && (
+                <button onClick={() => setEditingTitle(true)} className="tap-target flex items-center justify-center shrink-0 mt-0.5" style={{ color: "#666" }}>
+                  <Pencil size={16} />
+                </button>
+              )}
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          <h1 className="font-display text-3xl">{video.title.toUpperCase()}</h1>
-          {isOwnVideo && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground shrink-0"
-              onClick={() => { setEditTitle(video.title); setEditingTitle(true); }}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
+        {/* Player card */}
         {player && (
           <Link
             to={`/p/${player.username}`}
-            className="flex items-center gap-3 mb-8 p-4 rounded-xl bg-card border border-card-border hover:border-neon/30 transition-colors"
+            className="flex items-center gap-3 py-3 rounded-2xl px-4"
+            style={{ background: "#111", border: "1px solid hsl(var(--border))" }}
           >
-            <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-xl shrink-0 overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-secondary shrink-0 overflow-hidden flex items-center justify-center text-lg">
               {player.avatar_url ? (
-                <img src={player.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
               ) : (
                 "⚽"
               )}
             </div>
-            <div>
-              <p className="font-medium text-foreground">{player.display_name}</p>
-              <p className="text-xs text-muted-foreground">{player.club_name} · {player.position}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm text-foreground">{player.display_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {player.club_name}{player.club_name && player.position ? " · " : ""}{player.position}
+              </p>
             </div>
+            <span className="text-muted-foreground text-sm">→</span>
           </Link>
         )}
 
-        {isOwnVideo && (
-          <div className="rounded-xl border border-card-border bg-card p-6 text-center space-y-4">
-            <p className="text-2xl">🎥</p>
-            <p className="text-foreground font-medium">
-              Das ist dein eigenes Video – teile den Link damit deine Fans dich feiern können!
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                variant="neon"
-                className="rounded-full"
-                onClick={() => navigator.clipboard.writeText(window.location.href)}
-              >
-                Link kopieren 📋
-              </Button>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="icon" className="rounded-full" disabled={deleting}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Video löschen?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Das Video wird unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-                      {deleting ? "Wird gelöscht…" : "Löschen"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        )}
+        {/* Share button */}
+        <button
+          onClick={handleShare}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold text-base"
+          style={{ background: "#1a1a1a", color: "#fff" }}
+        >
+          <Share2 size={18} />
+          {copied ? "Link kopiert!" : "Link teilen"}
+        </button>
       </div>
 
-      <Dialog open={editingTitle} onOpenChange={(open) => !open && setEditingTitle(false)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Titel bearbeiten</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-            maxLength={100}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingTitle(false)}>Abbrechen</Button>
-            <Button variant="neon" onClick={handleSaveTitle} disabled={!editTitle.trim()}>Speichern</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete confirmation overlay */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div className="w-full max-w-lg p-5 pb-10 rounded-t-3xl space-y-4" style={{ background: "#111" }}>
+            <h2 className="font-display text-xl text-center">Video löschen?</h2>
+            <p className="text-sm text-muted-foreground text-center">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="w-full py-4 rounded-2xl font-semibold text-base"
+              style={{ background: "#FF3B30", color: "#fff" }}
+            >
+              {deleting ? "Wird gelöscht…" : "Ja, löschen"}
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="w-full py-4 rounded-2xl font-semibold text-base"
+              style={{ background: "#1a1a1a", color: "#fff" }}
+            >
+              Abbrechen
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

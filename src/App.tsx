@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import GrainOverlay from "@/components/GrainOverlay";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import OnboardingRoute from "@/components/OnboardingRoute";
@@ -11,7 +10,7 @@ import Entdecken from "./pages/Entdecken";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
-import Dashboard from "./pages/Dashboard";
+import Profil from "./pages/Profil";
 import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
 import PlayerProfile from "./pages/PlayerProfile";
@@ -24,7 +23,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <GrainOverlay />
         <Sonner />
         <BrowserRouter>
           <Routes>
@@ -33,7 +31,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/onboarding" element={<OnboardingRoute><Onboarding /></OnboardingRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
             <Route path="/dashboard/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
             <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/p/:username" element={<PlayerProfile />} />

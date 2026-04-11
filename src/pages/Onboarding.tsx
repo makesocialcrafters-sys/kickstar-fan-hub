@@ -1,13 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { slugify } from "@/lib/helpers";
-import { Check, X } from "lucide-react";
+import { Check, X, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { slugify } from "@/lib/helpers";
 import { uploadAvatar } from "@/lib/storage";
 
 const POSITIONS = [
@@ -19,52 +15,31 @@ const POSITIONS = [
 const Onboarding = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
-  const [step, setStep] = useState(1);
-  const [saving, setSaving] = useState(false);
-
-  // Step 1
   const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState("");
-
-  // Step 2
+  const [username, setUsername] = useState("");
   const [clubName, setClubName] = useState("");
   const [position, setPosition] = useState("");
-
-  // Step 3
-  const [username, setUsername] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [saving, setSaving] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [showPositions, setShowPositions] = useState(false);
+  const [error, setError] = useState("");
 
-  // Pre-fill name from auth metadata
   useEffect(() => {
-    if (user?.user_metadata?.full_name) {
-      setDisplayName(user.user_metadata.full_name);
-    }
+    if (user?.user_metadata?.full_name) setDisplayName(user.user_metadata.full_name);
   }, [user]);
 
-  // Auto-generate username from display name
   useEffect(() => {
-    if (step === 3 && displayName) {
-      setUsername(slugify(displayName));
-    }
-  }, [step, displayName]);
+    if (displayName) setUsername(slugify(displayName));
+  }, [displayName]);
 
-  // Check username availability
   const checkAvailability = useCallback((u: string) => {
-    if (!u || u.length < 3) {
-      setUsernameAvailable(null);
-      return;
-    }
+    if (!u || u.length < 3) { setUsernameAvailable(null); return; }
     setCheckingUsername(true);
     const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', u)
-        .maybeSingle();
-      // Available if no match or it's our own profile
+      const { data } = await supabase.from("profiles").select("id").eq("username", u).maybeSingle();
       setUsernameAvailable(!data || data.id === user?.id);
       setCheckingUsername(false);
     }, 400);
@@ -76,237 +51,163 @@ const Onboarding = () => {
     return cleanup;
   }, [username, checkAvailability]);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleFinish = async () => {
+  const handleSave = async () => {
     if (!user) return;
+    if (!displayName.trim()) { setError("Bitte gib deinen Namen ein."); return; }
+    if (!username || username.length < 3) { setError("Username muss mind. 3 Zeichen haben."); return; }
+    if (usernameAvailable === false) { setError("Dieser Username ist vergeben."); return; }
+    if (!clubName.trim()) { setError("Bitte gib deinen Verein ein."); return; }
+    if (!position) { setError("Bitte wähle deine Position."); return; }
     setSaving(true);
+    setError("");
     try {
       let avatar_url: string | null = null;
-      if (avatarFile) {
-        avatar_url = await uploadAvatar(user.id, avatarFile);
-      }
-
-      const { error } = await supabase
-        .from('profiles')
+      if (avatarFile) avatar_url = await uploadAvatar(user.id, avatarFile);
+      const { error: dbError } = await supabase.from("profiles")
         .update({
           username,
-          display_name: displayName,
-          club_name: clubName,
+          display_name: displayName.trim(),
+          club_name: clubName.trim(),
           position,
-          bio: bio || null,
           ...(avatar_url ? { avatar_url } : {}),
         })
-        .eq('id', user.id);
-
-      if (error) throw error;
+        .eq("id", user.id);
+      if (dbError) throw dbError;
       await refreshProfile();
-      setStep(4);
-    } catch (err: any) {
-      console.error('Profile update failed:', err);
+      navigate("/entdecken");
+    } catch {
+      setError("Speichern fehlgeschlagen. Bitte versuche es nochmal.");
     } finally {
       setSaving(false);
     }
   };
 
-  const progressWidth = `${(Math.min(step, 3) / 3) * 100}%`;
+  const canSave = displayName.trim() && username.length >= 3 && usernameAvailable !== false && clubName.trim() && position && !saving;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <span className="font-display text-3xl text-neon">SCORLINK</span>
-        </div>
+    <div className="min-h-screen flex flex-col px-5 py-14">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h1 className="font-display text-2xl" style={{ color: "#00C853" }}>SCORLINK</h1>
+        <p className="text-muted-foreground text-sm mt-1">Richte dein Profil ein</p>
+      </div>
 
-        {step <= 3 && (
-          <div className="mb-8">
-            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-              <div
-                className="h-full bg-neon rounded-full transition-all duration-500"
-                style={{ width: progressWidth }}
-              />
-            </div>
-            <p className="text-muted-foreground text-sm mt-2 text-center">
-              Schritt {step} von 3
-            </p>
-          </div>
-        )}
-
-        {/* Step 1: Profile */}
-        {step === 1 && (
-          <div className="space-y-6 animate-fade-in-up">
-            <h2 className="font-display text-3xl text-center">DEIN PROFIL</h2>
-            <div className="flex flex-col items-center gap-4">
-              <label className="cursor-pointer group">
-                <div className="w-24 h-24 rounded-full bg-secondary border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden group-hover:border-neon transition-colors">
-                  {avatarPreview ? (
-                    <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-muted-foreground text-3xl">📷</span>
-                  )}
-                </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-              </label>
-              <p className="text-muted-foreground text-xs">Profilbild hochladen</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Dein vollständiger Name</Label>
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Max Mustermann"
-                className="bg-card border-card-border h-12"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Kurzes Bio <span className="text-muted-foreground">(optional)</span></Label>
-              <Textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Erzähl was über dich…"
-                className="bg-card border-card-border min-h-[80px]"
-              />
-            </div>
-            <Button
-              variant="neon"
-              className="w-full h-12 rounded-full"
-              onClick={() => setStep(2)}
-              disabled={!displayName.trim()}
+      {/* Form */}
+      <div className="flex-1 space-y-5">
+        {/* Avatar */}
+        <div className="flex justify-center">
+          <label className="cursor-pointer">
+            <div
+              className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden"
+              style={{ background: "#111", border: "2px dashed #2a2a2a" }}
             >
-              Weiter →
-            </Button>
-          </div>
-        )}
-
-        {/* Step 2: Club & Position */}
-        {step === 2 && (
-          <div className="space-y-6 animate-fade-in-up">
-            <h2 className="font-display text-3xl text-center">VEREIN & POSITION</h2>
-            <div className="space-y-2">
-              <Label>Vereinsname</Label>
-              <Input
-                value={clubName}
-                onChange={(e) => setClubName(e.target.value)}
-                placeholder="FC Beispielstadt"
-                className="bg-card border-card-border h-12"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Position</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {POSITIONS.map((pos) => (
-                  <button
-                    key={pos}
-                    type="button"
-                    onClick={() => setPosition(pos)}
-                    className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
-                      position === pos
-                        ? "border-neon bg-neon/10 text-neon"
-                        : "border-card-border bg-card text-muted-foreground hover:border-muted-foreground/50"
-                    }`}
-                  >
-                    {pos}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1 h-12 rounded-full" onClick={() => setStep(1)}>
-                ← Zurück
-              </Button>
-              <Button
-                variant="neon"
-                className="flex-1 h-12 rounded-full"
-                onClick={() => setStep(3)}
-                disabled={!clubName.trim() || !position}
-              >
-                Weiter →
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Username */}
-        {step === 3 && (
-          <div className="space-y-6 animate-fade-in-up">
-            <h2 className="font-display text-3xl text-center">DEIN LINK</h2>
-            <div className="space-y-2">
-              <Label>Username</Label>
-              <div className="relative">
-                <Input
-                  value={username}
-                  onChange={(e) => setUsername(slugify(e.target.value))}
-                  placeholder="dein-username"
-                  className="bg-card border-card-border h-12 pr-10"
-                />
-                {username.length >= 3 && !checkingUsername && usernameAvailable !== null && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {usernameAvailable ? (
-                      <Check className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <X className="w-5 h-5 text-destructive" />
-                    )}
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                scorlink.app/p/<span className="text-neon">{username || "…"}</span>
-              </p>
-              {username.length >= 3 && !checkingUsername && usernameAvailable === false && (
-                <p className="text-destructive text-sm">Dieser Username ist leider vergeben.</p>
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl">📷</span>
               )}
             </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1 h-12 rounded-full" onClick={() => setStep(2)}>
-                ← Zurück
-              </Button>
-              <Button
-                variant="neon"
-                className="flex-1 h-12 rounded-full"
-                onClick={handleFinish}
-                disabled={!username || !usernameAvailable || saving}
-              >
-                {saving ? "Wird gespeichert…" : "Profil speichern"}
-              </Button>
-            </div>
-          </div>
-        )}
+            <p className="text-xs text-muted-foreground text-center mt-1">Foto (optional)</p>
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) { setAvatarFile(f); setAvatarPreview(URL.createObjectURL(f)); }
+            }} />
+          </label>
+        </div>
 
-        {/* Step 4: Success */}
-        {step === 4 && (
-          <div className="text-center space-y-6 animate-fade-in-up">
-            <div className="text-7xl">🎉</div>
-            <h2 className="font-display text-4xl text-neon neon-text-glow">PROFIL FERTIG!</h2>
-            <p className="text-muted-foreground">Dein öffentliches Profil ist live:</p>
-            <div className="bg-card border border-card-border rounded-xl p-4 flex items-center justify-between gap-3">
-              <span className="text-sm text-foreground truncate">
-                scorlink.app/p/{username}
-              </span>
-              <Button
-                variant="neonOutline"
-                size="sm"
-                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/p/${username}`)}
-              >
-                Kopieren
-              </Button>
-            </div>
-            <Button
-              variant="neon"
-              className="w-full h-12 rounded-full"
-              onClick={() => navigate("/dashboard")}
-            >
-              Zum Dashboard →
-            </Button>
+        {/* Name */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground">Name</label>
+          <input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Max Mustermann"
+            className="w-full rounded-2xl px-4 text-foreground text-base outline-none"
+            style={{ background: "#111", border: "1px solid hsl(var(--border))", height: 52, caretColor: "#00C853" }}
+          />
+        </div>
+
+        {/* Username */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground">Username</label>
+          <div className="relative">
+            <input
+              value={username}
+              onChange={(e) => setUsername(slugify(e.target.value))}
+              placeholder="maxmuster"
+              className="w-full rounded-2xl px-4 text-foreground text-base outline-none pr-12"
+              style={{ background: "#111", border: "1px solid hsl(var(--border))", height: 52, caretColor: "#00C853" }}
+            />
+            {username.length >= 3 && !checkingUsername && usernameAvailable !== null && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                {usernameAvailable ? <Check size={18} color="#00C853" /> : <X size={18} color="#FF3B30" />}
+              </div>
+            )}
           </div>
-        )}
+          <p className="text-xs text-muted-foreground">
+            scorlink.app/p/<span style={{ color: "#00C853" }}>{username || "…"}</span>
+          </p>
+        </div>
+
+        {/* Club */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground">Verein</label>
+          <input
+            value={clubName}
+            onChange={(e) => setClubName(e.target.value)}
+            placeholder="FC Beispielstadt"
+            className="w-full rounded-2xl px-4 text-foreground text-base outline-none"
+            style={{ background: "#111", border: "1px solid hsl(var(--border))", height: 52, caretColor: "#00C853" }}
+          />
+        </div>
+
+        {/* Position */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground">Position</label>
+          <button
+            type="button"
+            onClick={() => setShowPositions(!showPositions)}
+            className="w-full rounded-2xl px-4 flex items-center justify-between text-base"
+            style={{ background: "#111", border: "1px solid hsl(var(--border))", height: 52, color: position ? "#fff" : "#888" }}
+          >
+            {position || "Position wählen"}
+            <ChevronDown size={18} color="#666" />
+          </button>
+          {showPositions && (
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#111", border: "1px solid hsl(var(--border))" }}>
+              {POSITIONS.map((pos) => (
+                <button
+                  key={pos}
+                  type="button"
+                  onClick={() => { setPosition(pos); setShowPositions(false); }}
+                  className="w-full px-4 py-3 text-left text-sm flex items-center justify-between"
+                  style={{
+                    color: position === pos ? "#00C853" : "#fff",
+                    background: position === pos ? "#0a1f0a" : "transparent",
+                    borderBottom: "1px solid hsl(var(--border))",
+                  }}
+                >
+                  {pos}
+                  {position === pos && <Check size={16} color="#00C853" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {error && <p className="text-destructive text-sm">{error}</p>}
+      </div>
+
+      {/* Submit */}
+      <div className="pt-6">
+        <button
+          onClick={handleSave}
+          disabled={!canSave}
+          className="w-full py-4 rounded-2xl font-semibold text-base disabled:opacity-40"
+          style={{ background: "#00C853", color: "#000" }}
+        >
+          {saving ? "Wird gespeichert…" : "Profil erstellen"}
+        </button>
       </div>
     </div>
   );

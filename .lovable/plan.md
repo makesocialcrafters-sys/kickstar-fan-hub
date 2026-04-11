@@ -1,62 +1,44 @@
 
 
-## Plan: Core-Flow absichern & Bugs fixen
+## Plan: UI-Redesign — Mobile-First mit BottomNav
 
 ### Überblick
-Der Basis-Flow ist weitgehend implementiert. Es fehlen zwei Features (Video löschen, View-Count-Inkrement) und es gibt einen Bug in Login.tsx. Hier die konkreten Änderungen:
+Kompletter UI-Umbau: Dashboard und Navbar werden durch eine neue Profil-Seite und eine Bottom-Navigation ersetzt. Neues Farbschema (grün statt neon-gelb), neue Fonts (Syne + DM Sans), mobile-first Layout.
 
----
+### Änderungen
 
-### 1. Login.tsx — Doppelter `<Link>` Bug fixen
-Zeile 53 enthält zwei verschachtelte `<Link>`:
-```jsx
-<Link to="/" className="font-display text-3xl text-neon"><Link to="/" className="font-display text-3xl text-neon">SCORLINK</Link></Link>
-```
-Wird zu einem einzelnen `<Link>`.
+**Dateien ersetzen (8 Dateien):**
 
----
-
-### 2. VideoPage.tsx — View-Count via RPC
-Beim Laden der VideoPage wird `supabase.rpc('increment_view_count', { video_id: id })` aufgerufen — einmalig im `useEffect`, nachdem das Video geladen ist. Nur für fremde Videos (nicht eigene).
-
----
-
-### 3. Video löschen — Dashboard & VideoPage
-
-**Dashboard.tsx:**
-- Lösch-Button (Trash-Icon) an jedem Video in der Liste
-- Bestätigungsdialog (AlertDialog) vor dem Löschen
-- Nach Bestätigung: Video-Datei + Thumbnail aus Storage löschen, DB-Eintrag entfernen, Liste aktualisieren
-
-**VideoPage.tsx:**
-- Lösch-Button nur anzeigen wenn `isOwnVideo === true`
-- Gleiche Lösch-Logik mit Bestätigungsdialog
-- Nach Löschen: Redirect zum Dashboard
-
-**Shared Helper** (in `storage.ts`):
-- Neue Funktion `deleteVideoAssets(video: Video)` die:
-  - Video-Datei aus `videos`-Bucket löscht (Pfad aus URL extrahieren)
-  - Thumbnail aus `thumbnails`-Bucket löscht (falls vorhanden)
-  - DB-Eintrag löscht: `supabase.from('videos').delete().eq('id', video.id)`
-
----
-
-### Technische Details
-
-**Storage-Pfad-Extraktion:** Die Public URL enthält den Bucket-Pfad nach `/object/public/{bucket}/`. Daraus wird der relative Pfad für `storage.from(bucket).remove([path])` extrahiert.
-
-**RLS:** Delete-Policy für Videos existiert bereits (`auth.uid() = player_id`). Storage-Delete-Policies müssen ggf. per Migration hinzugefügt werden für die Buckets `videos` und `thumbnails`.
-
-**Migration:** Storage-RLS-Policies für DELETE auf `videos` und `thumbnails` Buckets hinzufügen, falls nicht vorhanden.
-
----
-
-### Dateien die geändert werden
-| Datei | Änderung |
+| Datei | Wesentliche Änderung |
 |---|---|
-| `src/pages/Login.tsx` | Doppelten Link fixen |
-| `src/pages/VideoPage.tsx` | View-Count RPC + Lösch-Button mit Dialog |
-| `src/pages/Dashboard.tsx` | Lösch-Button mit Bestätigungsdialog |
-| `src/lib/storage.ts` | `deleteVideoAssets()` Helper |
-| Migration | Storage DELETE Policies |
+| `src/index.css` | Neues Farbschema (#00C853 grün), Syne/DM Sans Fonts, CSS-Variablen, Scrollbar-Hide, safe-area-bottom |
+| `tailwind.config.ts` | Container max 480px, grüne Farben, neue Font-Families, fade-up Animation |
+| `src/App.tsx` | Route `/dashboard` → `/profil`, GrainOverlay entfernt, Dashboard-Import durch Profil ersetzt |
+| `src/lib/storage.ts` | Bereinigter Code mit try/catch in extractStoragePath |
+| `src/pages/Entdecken.tsx` | Feed-Layout mit BottomNav, Share-Button, Avatar-Anzeige |
+| `src/pages/VideoPage.tsx` | Komplett neu: Inline-Titel-Edit, custom Delete-Confirm, Share-Button, ArrowLeft-Navigation |
+| `src/pages/Upload.tsx` | Komplett neu: Custom File-Picker, Fortschrittsbalken, Erfolgsseite mit Link-Kopieren, BottomNav |
+| `src/pages/Onboarding.tsx` | Komplett neu: Custom Position-Dropdown, Avatar-Upload, navigiert zu `/entdecken` statt `/dashboard` |
+
+**Neue Dateien (2 Dateien):**
+
+| Datei | Inhalt |
+|---|---|
+| `src/components/BottomNav.tsx` | 3-Tab Bottom-Navigation: Entdecken, Upload (+), Profil |
+| `src/pages/Profil.tsx` | Ersetzt Dashboard: Avatar, Stats, Video-Grid, Settings/Logout-Icons |
+
+**Dateien löschen (2 Dateien):**
+- `src/pages/Dashboard.tsx`
+- `src/components/Navbar.tsx`
+
+**Zusätzliche Anpassungen (nicht im User-Code, aber nötig):**
+- `src/components/OnboardingRoute.tsx`: Redirect `/dashboard` → `/profil`
+- `src/pages/Settings.tsx`: Navbar-Import entfernen, BottomNav oder einfachen Back-Link nutzen
+- `src/pages/Register.tsx`: Google OAuth `redirectTo` von `/dashboard` → `/profil`
+- `src/pages/Login.tsx`: Redirects von `/dashboard` → `/profil` (falls vorhanden)
+
+### Hinweise
+- Der User hat den JSX-Code als Pseudo-Code geliefert (ohne korrekte JSX-Tags). Ich werde den Intent korrekt in valides TSX umsetzen.
+- Settings.tsx nutzt aktuell `Navbar` — wird auf einen einfachen Back-Link + BottomNav umgestellt.
+- Alle Referenzen zu `/dashboard` (außer `/dashboard/upload` und `/dashboard/settings`) werden auf `/profil` geändert.
 
